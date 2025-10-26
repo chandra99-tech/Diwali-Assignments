@@ -1,0 +1,130 @@
+import java.io.*;
+import java.util.*;
+
+// Custom exception for low attendance
+class LowAttendanceException extends Exception {
+    public LowAttendanceException(String message) {
+        super(message);
+    }
+}
+
+// Student class
+class Student implements Serializable, Comparable<Student> {
+    private int rollno;
+    private String sname;
+    private String course;
+    private double attendance_percentage;
+    private double score;
+
+    // Default constructor
+    public Student() {
+        this.rollno = 0;
+        this.sname = "";
+        this.course = "";
+        this.attendance_percentage = 0.0;
+        this.score = 0.0;
+    }
+
+    // Parameterized constructor
+    public Student(int rollno, String sname, String course, double attendance_percentage, double score) {
+        this.rollno = rollno;
+        this.sname = sname;
+        this.course = course;
+        this.attendance_percentage = attendance_percentage;
+        this.score = score;
+    }
+
+    // Getters and Setters
+    public int getRollno() { return rollno; }
+    public void setRollno(int rollno) { this.rollno = rollno; }
+    public String getSname() { return sname; }
+    public void setSname(String sname) { this.sname = sname; }
+    public String getCourse() { return course; }
+    public void setCourse(String course) { this.course = course; }
+    public double getAttendance_percentage() { return attendance_percentage; }
+    public void setAttendance_percentage(double attendance_percentage) { this.attendance_percentage = attendance_percentage; }
+    public double getScore() { return score; }
+    public void setScore(double score) { this.score = score; }
+
+    // Calculate grade based on score
+    public String calculateGrade() throws LowAttendanceException {
+        if (attendance_percentage < 60.0) {
+            throw new LowAttendanceException("Student " + sname + " is not eligible for grading due to low attendance (" + attendance_percentage + "%)");
+        }
+        
+        if (score >= 90) return "A+";
+        else if (score >= 80) return "A";
+        else if (score >= 70) return "B";
+        else if (score >= 60) return "C";
+        else return "F";
+    }
+
+    // Implement Comparable for sorting by attendance_percentage
+    @Override
+    public int compareTo(Student other) {
+        // Sort in descending order
+        return Double.compare(other.attendance_percentage, this.attendance_percentage);
+    }
+
+    @Override
+    public String toString() {
+        return "Student{" +
+                "rollno=" + rollno +
+                ", sname='" + sname + '\'' +
+                ", course='" + course + '\'' +
+                ", attendance_percentage=" + attendance_percentage +
+                ", score=" + score +
+                '}';
+    }
+}
+
+public class StudentManagement {
+    public static void main(String[] args) {
+        // Create a TreeSet to store students in decreasing order of attendance_percentage
+        TreeSet<Student> students = new TreeSet<>();
+
+        // Create 10 student objects
+        Student[] studentArray = {
+            new Student(1, "John", "CS", 85.5, 92.0),
+            new Student(2, "Alice", "IT", 55.0, 78.0),
+            new Student(3, "Bob", "CS", 90.0, 85.0),
+            new Student(4, "Emma", "ECE", 75.5, 88.0),
+            new Student(5, "Mike", "ME", 62.0, 65.0),
+            new Student(6, "Sarah", "CS", 95.0, 95.0),
+            new Student(7, "Tom", "IT", 58.0, 70.0),
+            new Student(8, "Lisa", "ECE", 80.0, 82.0),
+            new Student(9, "David", "ME", 70.0, 75.0),
+            new Student(10, "Anna", "CS", 88.0, 90.0)
+        };
+
+        // Add students to TreeSet
+        for (Student student : studentArray) {
+            students.add(student);
+        }
+
+        // Serialize students to file
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("students.ser"))) {
+            oos.writeObject(students);
+            System.out.println("Students serialized successfully.");
+        } catch (IOException e) {
+            System.out.println("Error during serialization: " + e.getMessage());
+        }
+
+        // Deserialize and display students
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream("students.ser"))) {
+            TreeSet<Student> deserializedStudents = (TreeSet<Student>) ois.readObject();
+            System.out.println("\nDeserialized Students (in decreasing order of attendance):");
+            for (Student student : deserializedStudents) {
+                System.out.println(student);
+                try {
+                    System.out.println("Grade: " + student.calculateGrade());
+                } catch (LowAttendanceException e) {
+                    System.out.println("Error: " + e.getMessage());
+                }
+                System.out.println();
+            }
+        } catch (IOException | ClassNotFoundException e) {
+            System.out.println("Error during deserialization: " + e.getMessage());
+        }
+    }
+}
